@@ -230,6 +230,8 @@ kidneyControllers.controller('GeneratorCtrl', function($scope) {
     $scope.donorsPerPatient1 = 1;
     $scope.donorsPerPatient2 = 0;
     $scope.donorsPerPatient3 = 0;
+
+    $scope.proportionAltruistic = 0;
   };
 });
 
