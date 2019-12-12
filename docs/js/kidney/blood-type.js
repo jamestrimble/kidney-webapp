@@ -7,18 +7,18 @@ BloodType.prototype.compatibleWith = function(donorType) {
     donorType.type===this.type;
 }
 
-function BloodTypeDistribution(prO, prA, prB, prAB) {
-  this.prO = prO;
-  this.prA = prA;
-  this.prB = prB;
-  this.prAB = prAB;
+function BloodTypeDistribution(probO, probA, probB, probAB) {
+  this.probO = probO;
+  this.probA = probA;
+  this.probB = probB;
+  this.probAB = probAB;
 }
 BloodTypeDistribution.prototype.draw = function() {
   var r = Math.random();
-  if (r <= this.prO)
+  if (r <= this.probO)
     return new BloodType("O");
   if (r <= this.probO + this.probA)
-  return new BloodType("A");
+    return new BloodType("A");
   if (r <= this.probO + this.probA + this.probB)
     return new BloodType("B");
   return new BloodType("AB");
