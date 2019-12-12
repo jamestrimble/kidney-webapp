@@ -212,6 +212,25 @@ kidneyControllers.controller('GeneratorCtrl', function($scope) {
         generateInstances(zip, gen, genConfig, 0);
       }, 1);
     }
+
+  $scope.useSaidmanValues = function() {
+    $scope.probFemale = 0.4090;
+    $scope.probSpousal = 0.4897;
+    $scope.probSpousalPraCompatibility = 0.75;
+    $scope.crfDistribution = "0.7019 0.05\n0.2 0.1\n0.0981 0.9";
+
+    $scope.donorTypeA = 0.3373;
+    $scope.donorTypeB = 0.1428;
+    $scope.donorTypeO = 0.4814;
+
+    $scope.patientTypeA = 0.3373;
+    $scope.patientTypeB = 0.1428;
+    $scope.patientTypeO = 0.4814;
+
+    $scope.donorsPerPatient1 = 1;
+    $scope.donorsPerPatient2 = 0;
+    $scope.donorsPerPatient3 = 0;
+  };
 });
 
 // TODO: put this somewhere other than global scope
@@ -251,8 +270,6 @@ var generateInstances = function(zip, gen, genConfig, i) {
   }, 1);
 });
 */
-
-
 
 kidneyControllers.controller('HomeCtrl', function($scope) {});
 
