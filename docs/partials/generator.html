@@ -1,0 +1,243 @@
+
+    <div>
+      
+      <div class="row">
+        <div class="large-12 columns">
+          <h1>Data Set Generator</h1>
+        </div>
+        
+        <div class="large-12 columns">
+          <form id="generator-form" name="genform" ng-submit="onSubmitted()" novalidate>
+
+            <div class="row">
+
+              <div class="large-6 medium-12 small-12 columns">
+                <div class="panel">
+                  <p><b>Donor blood types:</b> Enter the proportion of donors in each blood group<p>
+                  <div class="row">
+                    <div class="large-3 medium-3 small-6 columns">
+                      <label for="donorTypeO">Type O
+                        <input class="donor-blood-type" ng-model="donorTypeO" name="donorTypeO" type="number" min="0" max="1" step="0.0001" required />
+                      </label>
+                    </div>
+                    <div class="large-3 medium-3 small-6 columns">
+                      <label for="donorTypeA">Type A
+                        <input class="donor-blood-type" ng-model="donorTypeA" name="donorTypeA" type="number" min="0" max="1" step="0.0001" required />
+                      </label>
+                    </div>
+                    <div class="large-3 medium-3 small-6 columns">
+                      <label for="donorTypeB">Type B
+                        <input class="donor-blood-type" ng-model="donorTypeB" name="donorTypeB" type="number" min="0" max="1" step="0.0001" required />
+                      </label>
+                    </div>
+                    <div class="large-3 medium-3 small-6 columns">
+                      <label for="donorTypeAB">Type AB
+                        <input class="donor-blood-type" ng-model="donorTypeAB()" name="donorTypeAB"
+                                type="number" min="0" max="1" step="0.0001" ng-model-options="{ getterSetter: true }" required disabled />
+                      </label>
+                    </div>
+                    <div class="large-12 medium-12 small-12 alert-box alert radius columns"
+                               ng-show="genform.donorTypeO.$error.min || genform.donorTypeO.$error.max ||
+                                        genform.donorTypeA.$error.min || genform.donorTypeA.$error.max ||
+                                        genform.donorTypeB.$error.min || genform.donorTypeB.$error.max ||
+                                        genform.donorTypeAB.$error.min || genform.donorTypeAB.$error.max">
+                       The probabilities must be in range 0 to 1.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="large-6 medium-12 small-12 columns">
+                <div class="panel"> 
+                  <p><b>Patient blood types:</b> Enter the proportion of patients in each blood group<p>
+                  <div class="row">
+                    <div class="large-3 medium-3 small-6 columns">
+                      <label for="patientTypeO">Type O
+                        <input class="patient-blood-type" ng-model="patientTypeO" name="patientTypeO" type="number" min="0" max="1" step="0.0001" required />
+                      </label>
+                    </div>
+                    <div class="large-3 medium-3 small-6 columns">
+                      <label for="patientTypeA">Type A
+                        <input class="patient-blood-type" ng-model="patientTypeA" name="patientTypeA" type="number" min="0" max="1" step="0.0001" required />
+                      </label>
+                    </div>
+                    <div class="large-3 medium-3 small-6 columns">
+                      <label for="patientTypeB">Type B
+                        <input class="patient-blood-type" ng-model="patientTypeB" name="patientTypeB" type="number" min="0" max="1" step="0.0001" required />
+                      </label>
+                    </div>
+                    <div class="large-3 medium-3 small-6 columns">
+                      <label for="patientTypeAB">Type AB
+                        <input class="patient-blood-type" ng-model="patientTypeAB" name="patientTypeAB"
+                                type="number" min="0" max="1" step="0.0001" ng-model-options="{ getterSetter: true }" required disabled />
+                      </label>
+                    </div>
+                    <div class="large-12 medium-12 small-12 alert-box alert radius columns"
+                               ng-show="genform.patientTypeO.$error.min || genform.patientTypeO.$error.max ||
+                                        genform.patientTypeA.$error.min || genform.patientTypeA.$error.max ||
+                                        genform.patientTypeB.$error.min || genform.patientTypeB.$error.max ||
+                                        genform.patientTypeAB.$error.min || genform.patientTypeAB.$error.max">
+                       The probabilities must be in range 0 to 1.</div>
+                  </div>
+                </div>
+              </div>
+   
+            </div>
+            <div class="row">
+    
+              <div class="large-6 medium-12 small-12 columns">
+                <div class="panel">    
+                  <p><b>Donors per patient:</b> Enter the proportion of all patients (whether or not compatible with a willing donor)
+                  who have 1, 2, 3, 4 donors respectively<p>
+                  <div class="row">
+                    <div class="large-3 medium-3 small-6 columns">
+                      <label for="donorsPerPatient1">1 donor
+                        <input class="donors-per-patient" ng-model="donorsPerPatient1" name="donorsPerPatient1" type="number" min="0" max="1" step="0.0001" required />
+                      </label>
+                    </div>
+                    <div class="large-3 medium-3 small-6 columns">
+                      <label for="donorsPerPatient2">2 donors
+                        <input class="donors-per-patient" ng-model="donorsPerPatient2" name="donorsPerPatient2" type="number" min="0" max="1" step="0.0001" required />
+                      </label>
+                    </div>
+                    <div class="large-3 medium-3 small-6 columns">
+                      <label for="donorsPerPatient3">3 donors
+                        <input class="donors-per-patient" ng-model="donorsPerPatient3" name="donorsPerPatient3" type="number" min="0" max="1" step="0.0001" required />
+                      </label>
+                    </div>
+                    <div class="large-3 medium-3 small-6 columns">
+                      <label for="donorsPerPatient4">4 donors
+                        <input class="donors-per-patient" ng-model="donorsPerPatient4()" name="donorsPerPatient4"
+                                      type="number" min="0" max="1" step="0.0001" ng-model-options="{ getterSetter: true }" required disabled />
+                      </label>
+                    </div>
+                    <div class="large-12 medium-12 small-12 alert-box alert radius columns"
+                               ng-show="genform.donorsPerPatient1.$error.min || genform.donorsPerPatient1.$error.max ||
+                                        genform.donorsPerPatient2.$error.min || genform.donorsPerPatient2.$error.max ||
+                                        genform.donorsPerPatient3.$error.min || genform.donorsPerPatient3.$error.max ||
+                                        genform.donorsPerPatient4.$error.min || genform.donorsPerPatient4.$error.max">
+                       The probabilities must be in range 0 to 1.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="large-6 medium-12 small-12 columns">
+                <div class="panel">
+                  <p><b>Additional fields for compatibility with Saidman generator:</b>
+                  If the first two of these fields are set to zero, this section will have no effect.<p>
+                  <div class="row">
+                    <div class="large-4 medium-4 columns">
+                      <label for="probSpousal">Probability spousal
+                        <input ng-model="probSpousal" name="probSpousal" type="number" min="0" max="1" step="0.0001" required />
+                      </label>
+                    </div>
+                    <div class="large-4 medium-4 columns">
+                      <label for="probFemale">Probability female
+                        <input ng-model="probFemale" name="probFemale" type="number" min="0" max="1" step="0.0001" required />
+                      </label>
+                    </div>
+                    <div class="large-4 medium-4 columns">
+                      <label for="probSpousalPraCompatibility">Prob. spousal PRA compatibility
+                        <input ng-model="probSpousalPraCompatibility" name="probSpousalPraCompatibility" type="number" min="0" max="1" step="0.0001" required />
+                      </label>
+                    </div>
+                    <div class="large-12 medium-12 small-12 alert-box alert radius columns"
+                               ng-show="genform.probSpousal.$error.min || genform.probSpousal.$error.max ||
+                                        genform.probFemale.$error.min || genform.probFemale.$error.max ||
+                                        genform.probSpousalPraCompatibility.$error.min || genform.probSpousalPraCompatibility.$error.max">
+                       The probabilities must be in range 0 to 1.</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div class="row">
+
+
+              <div class="large-6 medium-12 small-12 columns">
+                <div class="panel">
+                  <p><b>Calculated reaction frequency</b></p>
+                  <p>
+                    Each row represents one band. Use the format <code>0.2 0.11</code> to
+                    represent a band with probability 0.2 in which all patients have cRF 0.11.
+                    Use the format <code>0.2 0.4 0.5</code> to represent a band with probability
+                    0.2 in which cRF values are uniformly distributed on the interval from
+                    0.4 to 0.5.
+                  </p>
+                  <div class="row">
+                    <div class="large-12 medium-12 columns">
+                      <label for="crfDistribution">Calculated reaction frequency
+                        <textarea ng-model="crfDistribution" name="crfDistribution"></textarea>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            
+              <div class="large-6 medium-12 small-12 columns">
+                <div class="panel">
+                  <p><b>Other options</b><p>
+                  <div class="row">
+                    <div class="small-6 columns">
+                      <label for="fileFormat">File format</label>
+                      </div>
+                      <div class="small-6 columns">
+                        <select ng-model="fileFormat" name="fileFormat">
+                          <option value="xml">XML</option>
+                          <option value="json">JSON</option>
+                          <!--option value="tsv">TSV</option-->
+                        </select>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="small-6 columns">
+                        <label for="patientsPerInstance">Number of patients per instance</label>
+                      </div>
+                      <div class="small-6 columns">
+                        <input ng-model="patientsPerInstance" name="patientsPerInstance" type="number" min="10" max="1000" step="10">
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="small-6 columns">
+                        <label for="numberOfInstances">Number of instances</label>
+                      </div>
+                      <div class="small-6 columns">
+                        <input ng-model="numberOfInstances" name="numberOfInstances" type="number" min="1" max="20" step="1">
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="small-6 columns">
+                        <label for="proportionAltruistic">Proportion of donors who are altruistic</label>
+                      </div>
+                      <div class="small-6 columns">
+                        <input ng-model="proportionAltruistic" name="proportionAltruistic" type="number" min="0" max="0.5" step="0.0001">
+                      </div>
+                    </div>
+                    <div class="large-12 medium-12 small-12 alert-box alert radius columns"
+                                 ng-show="genform.patientsPerInstance.$error.min || genform.patientsPerInstance.$error.max">
+                         The number of patients per instance must be in range 10 to 1000.</div>
+                    <div class="large-12 medium-12 small-12 alert-box alert radius columns"
+                                 ng-show="genform.numberOfInstances.$error.min || genform.numberOfInstances.$error.max">
+                         The number of instances must be at least 1 and at most 20.</div>
+                    <div class="large-12 medium-12 small-12 alert-box alert radius columns"
+                                 ng-show="genform.proportionAltruistic.$error.min || genform.proportionAltruistic.$error.max">
+                         The altruistic proportion must be at least 0 and at most 0.5.</div>
+                    <div class="row">
+                      <div class="large-12 columns">
+                        <button ng-disabled="genform.$invalid" id="submit-button" type="submit" class="medium radius button">
+                          Generate
+                        </button>
+                      </div>
+                      <div class="large-12 columns" id="progress-message"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </form>
+
+              
+          </div>     
+
+        </div>
+        
+      </div>
