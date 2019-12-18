@@ -181,19 +181,19 @@ kidneyControllers.controller('GeneratorCtrl', function($scope) {
         $scope.donorsPerPatient1,
         $scope.donorsPerPatient2,
         $scope.donorsPerPatient3,
-        $scope.donorsPerPatient4
+        $scope.donorsPerPatient4()
       ],
       donorBtDistribution: new BloodTypeDistribution(
         $scope.donorTypeO,
         $scope.donorTypeA,
         $scope.donorTypeB,
-        $scope.donorTypeAB
+        $scope.donorTypeAB()
       ),
       patientBtDistribution: new BloodTypeDistribution(
         $scope.patientTypeO,
         $scope.patientTypeA,
         $scope.patientTypeB,
-        $scope.patientTypeAB
+        $scope.patientTypeAB()
       ),
       probSpousal: $scope.probSpousal,
       probFemale: $scope.probFemale,
