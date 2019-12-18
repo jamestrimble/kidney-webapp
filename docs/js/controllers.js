@@ -207,6 +207,7 @@ kidneyControllers.controller('GeneratorCtrl', function($scope) {
     console.log(genConfig);
     var gen = new KidneyGenerator(genConfig);
     var zip = new JSZip();
+    zip.file("config.json", JSON.stringify(genConfig, undefined, 2));
     $("#progress-message").text("Generating instance 0");
       setTimeout(function() {
         generateInstances(zip, gen, genConfig, 0);
