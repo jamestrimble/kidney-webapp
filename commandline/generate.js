@@ -6,6 +6,7 @@ var args = process.argv.slice(2);
 
 var numPatients = +args[0];
 var numInstances = +args[1];
+var tune = args[2] || false;
 
 let cfg = JSON.parse(fs.readFileSync('saidman-config.json'));
 
@@ -20,6 +21,12 @@ saidmanCfg.patientBtDistribution = new BloodTypeDistribution(
     cfg.patientBtDistribution.probA,
     cfg.patientBtDistribution.probB,
     cfg.patientBtDistribution.probAB);
+
+if (tune) {
+  var tuneIter = 50;
+  var tuneError = 0.005;
+  saidmanCfg = TuneConfig(saidmanCfg, tuneIter, tuneError);
+}
 
 var gen = new KidneyGenerator(saidmanCfg);
 
