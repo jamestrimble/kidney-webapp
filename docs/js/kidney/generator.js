@@ -1,6 +1,12 @@
 function KidneyGenerator(genConfig) {
   this.genConfig = genConfig; 
   this.praBands = this.parsePraBands(genConfig.praBandsString);
+  if (genConfig.compatBraBandsString) {
+    this.compatPraBands = this.parsePraBands(genConfig.compatBraBandsString)
+  };
+  if (genConfig.incompatBraBandsString) {
+    this.incompatPraBands = this.parsePraBands(genConfig.incompatBraBandsString);
+  }
   console.log("Constructed a KidneyGenerator");
 }
 
@@ -42,7 +48,7 @@ KidneyGenerator.prototype.generateDataset = function(
     patient.bt = this.genConfig.patientBtDistribution.draw();
     ////console.log("patient bt");
     ////console.log(patient.bt);
-    
+    var hasBloodCompatibleDonor = false;
     for (var i=0; i<nDonors; i++) {
       donors[i] = new Donor(
         donorId++,
@@ -50,10 +56,13 @@ KidneyGenerator.prototype.generateDataset = function(
         this.genConfig.donorBtDistribution.draw(),
         false
       );
+      if (patient.bt.compatibleWith(donors[i].bt)) {
+        hasBloodCompatibleDonor = true;
+      }
     }
     
     patient.isWife = this.drawIsWife();
-    patient.crf = this.drawCrf(patient.isWife);
+    patient.crf = this.drawCrf(patient.isWife, hasBloodCompatibleDonor);
     
     // foundAMatch tell us whether there are any
     // donor-patient matches within this group consisting of
@@ -133,15 +142,22 @@ KidneyGenerator.prototype.drawIsWife = function() {
   return (Math.random() <= probFemale && Math.random() <= probSpousalDonor);
 };
 
-KidneyGenerator.prototype.drawCrf = function(isWife) {
+KidneyGenerator.prototype.drawCrf = function(isWife, hasBloodCompatibleDonor) {
   var crf = -1;
   var r = Math.random();
   var cumulativePraProb = 0;
 
+  var band = this.praBands;
+  if (hasBloodCompatibleDonor && this.compatPraBands) {
+    band = this.compatPraBands;
+  }
+  if (!hasBloodCompatibleDonor && this.incompatPraBands) {
+    band = this.incompatPraBands;
+  }
   // Check if r is less than the cumulative probability of
   // PRA values 0,...,i.
-  for (var i = 0; i < this.praBands.length; i++) {
-    var praBand = this.praBands[i];
+  for (var i = 0; i < band.length; i++) {
+    var praBand = band[i];
     ////console.log(praBand);
     cumulativePraProb += praBand.prob;
     if (r <= cumulativePraProb || (i === this.praBands.length - 1)) {
@@ -157,7 +173,7 @@ KidneyGenerator.prototype.drawCrf = function(isWife) {
 
   ////console.log("crf")
   ////console.log(crf)
-  
+
   if (!isWife) {
     return crf;
   } else {
