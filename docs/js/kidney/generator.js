@@ -93,6 +93,14 @@ KidneyGenerator.prototype.generateDataset = function(
     
     patient.isWife = this.drawIsWife();
     patient.crf = this.drawCrf(patient.isWife, hasBloodCompatibleDonor);
+
+    // Add compatBand to the patient object, for easy future access
+    for (var i = 0; i < this.compatBands.length; i++) {
+      var band = this.compatBands[i];
+      if ((band.lowPra <= patient.crf) && (patient.crf < band.highPra)) {
+        patient.compatBand = band;
+      }
+    }
     
     // foundAMatch tell us whether there are any
     // donor-patient matches within this group consisting of
@@ -110,13 +118,6 @@ KidneyGenerator.prototype.generateDataset = function(
       nGroupsGenerated++;
       for (var i = 0; i < nDonors; i++) {
         generatedDataset.addDonor(donors[i]);
-      }
-      // Add compatBand to the patient object, for easy future access
-      for (var i = 0; i < this.genConfig.compatBands.length; i++) {
-        var band = this.genConfig.compatBands[i];
-        if ((band.lowPra <= patient.crf) && (patient.crf < band.highPra)) {
-          patient.compatBand = band;
-        }
       }
       patientList.push(patient);
     }
