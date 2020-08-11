@@ -1,5 +1,7 @@
 function KidneyGenerator(genConfig) {
-  this.genConfig = genConfig; 
+  this.genConfig = genConfig;
+
+
   this.praBands = this.parsePraBands(genConfig.praBandsString);
   if (genConfig.compatBraBandsString) {
     this.compatPraBands = this.parsePraBands(genConfig.compatBraBandsString)
@@ -7,8 +9,36 @@ function KidneyGenerator(genConfig) {
   if (genConfig.incompatBraBandsString) {
     this.incompatPraBands = this.parsePraBands(genConfig.incompatBraBandsString);
   }
+  if (genConfig.compatBandsString) {
+    this.compatBands = parseCompatBands(genConfig.compatBandsString);
+  } else {
+    // The possibility of a positive crossmatch is correlated with the cPRA level
+    // of a recipient. However, it is also not as simple as
+    // Prob(crossmatch) = cPRA
+    // We instead model it as Prob(crossmatch) = praIntercept + praMultiplier * cPRA
+    praMultiplier = genConfig.praMultiplier || 1;
+    praIntercept = genConfig.praIntercept || 0;
+    this.compatBands = [new CompatBand(0, 101, praMultiplier, praIntercept, 1)];
+  }
   console.log("Constructed a KidneyGenerator");
 }
+
+function parseCompatBands(s) {
+  var bandStrings = s.split(/\r\n|\r|\n/g);
+  var retVal = [];
+  ////console.log(bandStrings);
+  for (var i=0; i<bandStrings.length; i++) {
+    var bandString = bandStrings[i];
+    if (bandString) {
+      var tokens = bandString.split(/ +/);
+      if (!tokens[3]) tokens[3] = 0;
+      if (!tokens[4]) tokens[4] = 1;
+      retVal.push(new CompatBand(+tokens[0], +tokens[1], +tokens[2], +tokens[3], +tokens[4]));
+    }
+  }
+  return retVal;
+}
+
 
 KidneyGenerator.prototype.parsePraBands = function(s) {
   var bandStrings = s.split(/\r\n|\r|\n/g);
@@ -81,6 +111,13 @@ KidneyGenerator.prototype.generateDataset = function(
       for (var i = 0; i < nDonors; i++) {
         generatedDataset.addDonor(donors[i]);
       }
+      // Add compatBand to the patient object, for easy future access
+      for (var i = 0; i < this.genConfig.compatBands.length; i++) {
+        var band = this.genConfig.compatBands[i];
+        if ((band.lowPra <= patient.crf) && (patient.crf < band.highPra)) {
+          patient.compatBand = band;
+        }
+      }
       patientList.push(patient);
     }
   }
@@ -89,16 +126,16 @@ KidneyGenerator.prototype.generateDataset = function(
     var patient = patientList[i];
     for (var j=0; j<generatedDataset.getDonorCount(); j++) {
       var donor = generatedDataset.getDonorAt(j);
-      if (!donor.hasSource(patient) && patient.compatibleWith(donor)) {
+      if (!donor.hasSource(patient) && patient.compatibleWith(donor, this.genConfig.praIntercept, this.genConfig.praMultiplier)) {
         donor.addMatch({recipient: patient, score: this.drawScore()});
       }
     }
   }
     
   var nAltruisticGenerated = 0;
-  var nAltruisticToGenerate = Math.round(generatedDataset.getDonorCount()
+  var nAltruisticToGenerate = this.genConfig.numberOfAltruists || (Math.round(generatedDataset.getDonorCount()
       * proportionOfDonorsAltruistic
-      / (1 - proportionOfDonorsAltruistic));
+      / (1 - proportionOfDonorsAltruistic)));
   
   //console.log([nAltruisticGenerated, nAltruisticToGenerate]);
   
@@ -113,7 +150,7 @@ KidneyGenerator.prototype.generateDataset = function(
     var atLeastOneMatchFound = false;
     for (var i=0; i<patientList.length; i++) {
       var patient = patientList[i];
-      if (patient.compatibleWith(altruisticDonor)) {
+      if (patient.compatibleWith(altruisticDonor, this.genConfig.praIntercept, this.genConfig.praMultiplier, this.genConfig.probAdjustmentNDD)) {
         atLeastOneMatchFound = true;
         altruisticDonor.addMatch(
             {recipient: patient, score: this.drawScore()});
@@ -193,8 +230,6 @@ KidneyGenerator.prototype.generateNumberOfDonors = function() {
       return i + 1;
     }
   }
-  ////console.log("This line shouldn't normally be reached  " + r);
-    
   // This shouldn't be reached, except in the case of a
   // floating-point arithmetic imprecision
   return this.genConfig.donorCountProbabilities.length;

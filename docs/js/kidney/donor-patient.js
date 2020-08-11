@@ -1,12 +1,15 @@
 function Patient(id) {
   this.id = id;
 }
+
 Patient.prototype.compatibleWith = function(donor) {
   return this.bt.compatibleWith(donor.bt)
         && !this.positiveCrossMatch();
 }
+
 Patient.prototype.positiveCrossMatch = function() {
-  return Math.random() <= this.crf;
+  var prob = (this.compatBand.intercept + this.compatBand.multiplier * this.crf) * this.compatBand.isNDDCost;
+  return Math.random() <= prob;
 }
 
 function Donor(id, dage, bt, isAltruistic) {
