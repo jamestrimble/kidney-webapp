@@ -1,13 +1,13 @@
 function KidneyGenerator(genConfig) {
   this.genConfig = genConfig;
-
-
-  this.praBands = this.parsePraBands(genConfig.praBandsString);
-  if (genConfig.compatBraBandsString) {
-    this.compatPraBands = this.parsePraBands(genConfig.compatBraBandsString)
-  };
-  if (genConfig.incompatBraBandsString) {
-    this.incompatPraBands = this.parsePraBands(genConfig.incompatBraBandsString);
+  if (genConfig.praBandsString) {
+    this.praBands = this.parsePraBands(genConfig.praBandsString);
+  }
+  if (genConfig.compatPraBandsString) {
+    this.compatPraBands = this.parsePraBands(genConfig.compatPraBandsString)
+  }
+  if (genConfig.incompatPraBandsString) {
+    this.incompatPraBands = this.parsePraBands(genConfig.incompatPraBandsString);
   }
   if (genConfig.compatBandsString) {
     this.compatBands = parseCompatBands(genConfig.compatBandsString);
@@ -18,7 +18,10 @@ function KidneyGenerator(genConfig) {
     // We instead model it as Prob(crossmatch) = praIntercept + praMultiplier * cPRA
     praMultiplier = genConfig.praMultiplier || 1;
     praIntercept = genConfig.praIntercept || 0;
-    this.compatBands = [new CompatBand(0, 101, praMultiplier, praIntercept, 1)];
+    this.compatBands = [new CompatBand(0, 101, praIntercept, praMultiplier, 1)];
+  }
+  if (this.genConfig.probAdjustmentNDDBands) {
+    this.NDDBands = new NDDBands(this.genConfig.probAdjustmentNDDBands);
   }
   console.log("Constructed a KidneyGenerator");
 }
@@ -26,14 +29,14 @@ function KidneyGenerator(genConfig) {
 function parseCompatBands(s) {
   var bandStrings = s.split(/\r\n|\r|\n/g);
   var retVal = [];
-  ////console.log(bandStrings);
   for (var i=0; i<bandStrings.length; i++) {
     var bandString = bandStrings[i];
     if (bandString) {
       var tokens = bandString.split(/ +/);
       if (!tokens[3]) tokens[3] = 0;
       if (!tokens[4]) tokens[4] = 1;
-      retVal.push(new CompatBand(+tokens[0], +tokens[1], +tokens[2], +tokens[3], +tokens[4]));
+      // lowPRAbound, highPRAbound, intercept, multiplier, isNDDCost
+      retVal.push(new CompatBand(tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]));
     }
   }
   return retVal;
@@ -43,12 +46,10 @@ function parseCompatBands(s) {
 KidneyGenerator.prototype.parsePraBands = function(s) {
   var bandStrings = s.split(/\r\n|\r|\n/g);
   var retVal = [];
-  ////console.log(bandStrings);
   for (var i=0; i<bandStrings.length; i++) {
     var bandString = bandStrings[i];
     if (bandString) {
       var tokens = bandString.split(/ +/);
-      ////console.log(tokens);
       if (!tokens[2]) tokens[2] = tokens[1];
       retVal.push(new PraBand(+tokens[0], +tokens[1], +tokens[2]));
     }
@@ -70,14 +71,10 @@ KidneyGenerator.prototype.generateDataset = function(
   
   var nGroupsGenerated = 0;
   while (nGroupsGenerated < numGroupsToGenerate) {
-    ////console.log([nGroupsGenerated, numGroupsToGenerate]);
     var nDonors = this.generateNumberOfDonors();
-    ////console.log(nDonors)
     var donors = [];
     var patient = new Patient(patientId++);
     patient.bt = this.genConfig.patientBtDistribution.draw();
-    ////console.log("patient bt");
-    ////console.log(patient.bt);
     var hasBloodCompatibleDonor = false;
     for (var i=0; i<nDonors; i++) {
       donors[i] = new Donor(
@@ -99,7 +96,15 @@ KidneyGenerator.prototype.generateDataset = function(
       var band = this.compatBands[i];
       if ((band.lowPra <= patient.crf) && (patient.crf < band.highPra)) {
         patient.compatBand = band;
+        break;
       }
+    }
+    if (! patient.compatBand) {
+      for (var i = 0; i < this.compatBands.length; i++) {
+        var band = this.compatBands[i];
+        console.log("band " + i + " has low " + band.lowPra + " and high " + band.highPra);
+      }
+      throw new Error("No compatBand found for PRA = " + patient.crf);
     }
     
     // foundAMatch tell us whether there are any
@@ -114,7 +119,6 @@ KidneyGenerator.prototype.generateDataset = function(
     }
     
     if (!foundAMatch) {
-      ////console.log("incrementing nGroupsGenerated");
       nGroupsGenerated++;
       for (var i = 0; i < nDonors; i++) {
         generatedDataset.addDonor(donors[i]);
@@ -127,7 +131,7 @@ KidneyGenerator.prototype.generateDataset = function(
     var patient = patientList[i];
     for (var j=0; j<generatedDataset.getDonorCount(); j++) {
       var donor = generatedDataset.getDonorAt(j);
-      if (!donor.hasSource(patient) && patient.compatibleWith(donor, this.genConfig.praIntercept, this.genConfig.praMultiplier)) {
+      if (!donor.hasSource(patient) && patient.compatibleWith(donor)) {
         donor.addMatch({recipient: patient, score: this.drawScore()});
       }
     }
@@ -138,20 +142,23 @@ KidneyGenerator.prototype.generateDataset = function(
       * proportionOfDonorsAltruistic
       / (1 - proportionOfDonorsAltruistic)));
   
-  //console.log([nAltruisticGenerated, nAltruisticToGenerate]);
   
   while (nAltruisticGenerated < nAltruisticToGenerate) {
-    //console.log([nAltruisticGenerated, nAltruisticToGenerate]);
     var altruisticDonor = new Donor(
       donorId,
       this.drawDage(),
       this.genConfig.donorBtDistribution.draw(),
       true
     );
+    if (this.NDDBands) {
+      altruisticDonor.probAdjustmentNDD = this.NDDBands.getAdjustment()
+    } else {
+      altruisticDonor.probAdjustmentNDD = this.genConfig.probAdjustmentNDD || 1;
+    }
     var atLeastOneMatchFound = false;
     for (var i=0; i<patientList.length; i++) {
       var patient = patientList[i];
-      if (patient.compatibleWith(altruisticDonor, this.genConfig.praIntercept, this.genConfig.praMultiplier, this.genConfig.probAdjustmentNDD)) {
+      if (patient.compatibleWith(altruisticDonor)) {
         atLeastOneMatchFound = true;
         altruisticDonor.addMatch(
             {recipient: patient, score: this.drawScore()});
@@ -196,9 +203,9 @@ KidneyGenerator.prototype.drawCrf = function(isWife, hasBloodCompatibleDonor) {
   // PRA values 0,...,i.
   for (var i = 0; i < band.length; i++) {
     var praBand = band[i];
-    ////console.log(praBand);
     cumulativePraProb += praBand.prob;
-    if (r <= cumulativePraProb || (i === this.praBands.length - 1)) {
+    //console.log("Band " + praBand.minPra + "," + praBand.maxPra + " has prob " + praBand.prob + " and cum is " + cumulativePraProb);
+    if (r <= cumulativePraProb || (i === band.length - 1)) {
       if (praBand.minPra === praBand.maxPra) {
         crf = praBand.minPra;
       } else {
@@ -208,9 +215,6 @@ KidneyGenerator.prototype.drawCrf = function(isWife, hasBloodCompatibleDonor) {
       break;
     }
   }
-
-  ////console.log("crf")
-  ////console.log(crf)
 
   if (!isWife) {
     return crf;
