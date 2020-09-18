@@ -68,7 +68,7 @@ KidneyGenerator.prototype.generateDataset = function(
 
   var patientId = 0;
   var donorId = 0;
-  
+
   var nGroupsGenerated = 0;
   while (nGroupsGenerated < numGroupsToGenerate) {
     var nDonors = this.generateNumberOfDonors();
@@ -124,6 +124,7 @@ KidneyGenerator.prototype.generateDataset = function(
         generatedDataset.addDonor(donors[i]);
       }
       patientList.push(patient);
+      generatedDataset.addRecipient(patient);
     }
   }
 
