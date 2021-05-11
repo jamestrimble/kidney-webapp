@@ -4,9 +4,15 @@ const fs = require('fs');
 
 var args = process.argv.slice(2);
 
-var configFile = args[0] || 'saidman-config.json';
-
-var config = JSON.parse(fs.readFileSync(configFile));
+var config;
+try {
+  config = JSON.parse(fs.readFileSync(args[0]));
+} catch (err) { // Most likely, arguments are numPatients and numInstances
+  config = JSON.parse(fs.readFileSync('saidman-config.json'));
+  config.patientsPerInstance = +args[0];
+  config.numberOfInstances = +args[1];
+  config.testing = true;
+}
 
 config.patientBtDistribution = new BloodTypeDistribution(
     config.patientBtDistribution.probO,
