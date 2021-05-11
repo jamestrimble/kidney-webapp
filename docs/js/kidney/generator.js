@@ -1,13 +1,20 @@
 function KidneyGenerator(genConfig) {
   this.genConfig = genConfig;
-  if (genConfig.praBandsString) {
-    this.praBands = this.parsePraBands(genConfig.praBandsString);
+  if (genConfig.praBands) {
+    this.praBands = genConfig.praBands;
+  } else if (genConfig.praBandsString) {
+    this.praBands = parsePraBands(genConfig.praBandsString);
   }
-  if (genConfig.compatPraBandsString) {
-    this.compatPraBands = this.parsePraBands(genConfig.compatPraBandsString)
+  if (genConfig.compatPraBands) {
+    this.compatPraBands = genConfig.compatPraBands;
+  } else if (genConfig.compatPraBandsString) {
+    console.log("Parsing new compat band")
+    this.compatPraBands = parsePraBands(genConfig.compatPraBandsString)
   }
-  if (genConfig.incompatPraBandsString) {
-    this.incompatPraBands = this.parsePraBands(genConfig.incompatPraBandsString);
+  if (genConfig.incompatPraBands) {
+    this.incompatPraBands = genConfig.incompatPraBands;
+  } else if (genConfig.incompatPraBandsString) {
+    this.incompatPraBands = parsePraBands(genConfig.incompatPraBandsString);
   }
   if (genConfig.compatBandsString) {
     this.compatBands = parseCompatBands(genConfig.compatBandsString);
@@ -24,6 +31,23 @@ function KidneyGenerator(genConfig) {
     this.NDDBands = new NDDBands(this.genConfig.probAdjustmentNDDBands);
   }
   console.log("Constructed a KidneyGenerator");
+}
+
+KidneyGenerator.prototype.drawDonorBt = function(recipientBt) {
+  if (this.genConfig.donorBtDistributionByPatientO) {
+    if (recipientBt == "O") {
+      return this.genConfig.donorBtDistributionByPatientO.draw();
+    } else if (recipientBt == "A") {
+      return this.genConfig.donorBtDistributionByPatientA.draw();
+    } else if (recipientBt == "B") {
+      return this.genConfig.donorBtDistributionByPatientB.draw();
+    } else if (recipientBt == "AB") {
+      return this.genConfig.donorBtDistributionByPatientAB.draw();
+    } else if (recipientBt == "NDD") {
+      return this.genConfig.donorBtDistributionByPatientNDD.draw();
+    }
+  }
+  return this.genConfig.donorBtDistribution.draw()
 }
 
 function parseCompatBands(s) {
@@ -43,7 +67,10 @@ function parseCompatBands(s) {
 }
 
 
-KidneyGenerator.prototype.parsePraBands = function(s) {
+function parsePraBands(s) {
+  if (s === undefined) {
+    return undefined;
+  }
   var bandStrings = s.split(/\r\n|\r|\n/g);
   var retVal = [];
   for (var i=0; i<bandStrings.length; i++) {
@@ -61,7 +88,6 @@ KidneyGenerator.prototype.generateDataset = function(
     numGroupsToGenerate, proportionOfDonorsAltruistic) {
   
   var generatedDataset = new GeneratedDataset();
-  
   // this.incompatiblePairs = [];
   // this.compatiblePairs = [];
   patientList = [];
@@ -75,21 +101,21 @@ KidneyGenerator.prototype.generateDataset = function(
     var donors = [];
     var patient = new Patient(patientId++);
     patient.bt = this.genConfig.patientBtDistribution.draw();
-    var hasBloodCompatibleDonor = false;
+    patient.hasBloodCompatibleDonor = false;
     for (var i=0; i<nDonors; i++) {
       donors[i] = new Donor(
         donorId++,
         this.drawDage(),
-        this.genConfig.donorBtDistribution.draw(),
+        this.drawDonorBt(patient.bt.type),
         false
       );
       if (patient.bt.compatibleWith(donors[i].bt)) {
-        hasBloodCompatibleDonor = true;
+        patient.hasBloodCompatibleDonor = true;
       }
     }
     
     patient.isWife = this.drawIsWife();
-    patient.crf = this.drawCrf(patient.isWife, hasBloodCompatibleDonor);
+    patient.crf = this.drawCrf(patient.isWife, patient.hasBloodCompatibleDonor);
 
     // Add compatBand to the patient object, for easy future access
     for (var i = 0; i < this.compatBands.length; i++) {
@@ -118,7 +144,7 @@ KidneyGenerator.prototype.generateDataset = function(
       donor.addSource(patient);
     }
     
-    if (!foundAMatch) {
+    if (this.genConfig.assumePairsIncompatible || !foundAMatch) {
       nGroupsGenerated++;
       for (var i = 0; i < nDonors; i++) {
         generatedDataset.addDonor(donors[i]);
@@ -148,7 +174,7 @@ KidneyGenerator.prototype.generateDataset = function(
     var altruisticDonor = new Donor(
       donorId,
       this.drawDage(),
-      this.genConfig.donorBtDistribution.draw(),
+      this.drawDonorBt("NDD"),
       true
     );
     if (this.NDDBands) {
@@ -205,7 +231,6 @@ KidneyGenerator.prototype.drawCrf = function(isWife, hasBloodCompatibleDonor) {
   for (var i = 0; i < band.length; i++) {
     var praBand = band[i];
     cumulativePraProb += praBand.prob;
-    //console.log("Band " + praBand.minPra + "," + praBand.maxPra + " has prob " + praBand.prob + " and cum is " + cumulativePraProb);
     if (r <= cumulativePraProb || (i === band.length - 1)) {
       if (praBand.minPra === praBand.maxPra) {
         crf = praBand.minPra;
@@ -216,7 +241,6 @@ KidneyGenerator.prototype.drawCrf = function(isWife, hasBloodCompatibleDonor) {
       break;
     }
   }
-
   if (!isWife) {
     return crf;
   } else {
