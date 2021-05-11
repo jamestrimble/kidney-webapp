@@ -52,7 +52,9 @@ if (config.tune) {
   var tuneIter = config.tune.iters || 50;
   var tuneError = config.tune.error || 0.005;
   var tuneSize = config.tune.size || config.patientsPerInstance;
-  config = TuneConfig(config, tuneIter, tuneError, tuneSize);
+  config = TuneConfig(config, tuneIter, tuneError, tuneSize,
+    true /* tuneBloodTypes */,
+    config.donorCountProbabilities[0] != 1 /* tuneDonors */);
 }
 
 var gen = new KidneyGenerator(config);

@@ -248,6 +248,7 @@ function getSplitPraErrors(distributions, targetCompatPra, targetIncompatPra) {
 }
 
 function TuneConfig(targetConfig, maxIter, maxError, tuneSize, tuneBloodtypes=true, tuneDonors=true, tunePRA=true) {
+  var tuneNdds = targetConfig.numberOfAltruists != 0;
   var targetDonors = {...targetConfig.donorBtDistribution};
   var targetDonorsByPatient = {
     O: {...targetConfig.donorBtDistributionByPatientO},
@@ -304,10 +305,12 @@ function TuneConfig(targetConfig, maxIter, maxError, tuneSize, tuneBloodtypes=tr
                              Math.abs(btDistributions.donor.AB.probA - targetDonorsByPatient.AB.probA),
                              Math.abs(btDistributions.donor.AB.probB - targetDonorsByPatient.AB.probB),
                              Math.abs(btDistributions.donor.AB.probAB - targetDonorsByPatient.AB.probAB)];
-        btErrors.donor.NDD = [Math.abs(btDistributions.donor.NDD.probO - targetDonorsByPatient.NDD.probO),
-                              Math.abs(btDistributions.donor.NDD.probA - targetDonorsByPatient.NDD.probA),
-                              Math.abs(btDistributions.donor.NDD.probB - targetDonorsByPatient.NDD.probB),
-                              Math.abs(btDistributions.donor.NDD.probAB - targetDonorsByPatient.NDD.probAB)];
+        if (tuneNdds) {
+          btErrors.donor.NDD = [Math.abs(btDistributions.donor.NDD.probO - targetDonorsByPatient.NDD.probO),
+                                Math.abs(btDistributions.donor.NDD.probA - targetDonorsByPatient.NDD.probA),
+                                Math.abs(btDistributions.donor.NDD.probB - targetDonorsByPatient.NDD.probB),
+                                Math.abs(btDistributions.donor.NDD.probAB - targetDonorsByPatient.NDD.probAB)];
+        }
         scaleBtDistribution(currentConfig.donorBtDistributionByPatientO, btDistributions.donor.O,
           targetDonorsByPatient.O);
         scaleBtDistribution(currentConfig.donorBtDistributionByPatientA, btDistributions.donor.A,
@@ -316,11 +319,17 @@ function TuneConfig(targetConfig, maxIter, maxError, tuneSize, tuneBloodtypes=tr
           targetDonorsByPatient.B);
         scaleBtDistribution(currentConfig.donorBtDistributionByPatientAB, btDistributions.donor.AB,
           targetDonorsByPatient.AB);
-        scaleBtDistribution(currentConfig.donorBtDistributionByPatientNDD, btDistributions.donor.NDD,
-          targetDonorsByPatient.NDD);
+        if (tuneNdds) {
+          scaleBtDistribution(currentConfig.donorBtDistributionByPatientNDD, btDistributions.donor.NDD,
+            targetDonorsByPatient.NDD);
+        }
         scaleBtDistribution(currentConfig.patientBtDistribution, btDistributions.recip,
           targetRecips);
-        btError = Math.max(...btErrors.recip, ...btErrors.donor.O, ...btErrors.donor.A, ...btErrors.donor.B, ...btErrors.donor.AB, ...btErrors.donor.NDD)
+        if (tuneNdds) {
+          btError = Math.max(...btErrors.recip, ...btErrors.donor.O, ...btErrors.donor.A, ...btErrors.donor.B, ...btErrors.donor.AB, ...btErrors.donor.NDD)
+        } else {
+          btError = Math.max(...btErrors.recip, ...btErrors.donor.O, ...btErrors.donor.A, ...btErrors.donor.B, ...btErrors.donor.AB)
+        }
       } else {
         btDistributions = calculateBloodDistributions(dataset);
 
@@ -406,12 +415,13 @@ function TuneConfig(targetConfig, maxIter, maxError, tuneSize, tuneBloodtypes=tr
       console.log("\tA:\t" + targetDonorsByPatient.AB.probA.toFixed(4) + "\t" + btDistributions.donor.AB.probA.toFixed(4) + "\t" + currentConfig.donorBtDistributionByPatientAB.probA.toFixed(4) + "\t" + btErrors.donor.AB[1].toFixed(4));
       console.log("\tB:\t" + targetDonorsByPatient.AB.probB.toFixed(4) + "\t" + btDistributions.donor.AB.probB.toFixed(4) + "\t" + currentConfig.donorBtDistributionByPatientAB.probB.toFixed(4) + "\t" + btErrors.donor.AB[2].toFixed(4));
       console.log("\tAB:\t" + targetDonorsByPatient.AB.probAB.toFixed(4) + "\t" + btDistributions.donor.AB.probAB.toFixed(4) + "\t" + currentConfig.donorBtDistributionByPatientAB.probAB.toFixed(4) + "\t" + btErrors.donor.AB[3].toFixed(4));
-      console.log("NDDonors target\tactual\tprobs\terr");
-      console.log("O:\t" + targetDonorsByPatient.NDD.probO.toFixed(4) + "\t" + btDistributions.donor.NDD.probO.toFixed(4) + "\t" + currentConfig.donorBtDistributionByPatientNDD.probO.toFixed(4) + "\t" + btErrors.donor.NDD[0].toFixed(4));
-      console.log("A:\t" + targetDonorsByPatient.NDD.probA.toFixed(4) + "\t" + btDistributions.donor.NDD.probA.toFixed(4) + "\t" + currentConfig.donorBtDistributionByPatientNDD.probA.toFixed(4) + "\t" + btErrors.donor.NDD[1].toFixed(4));
-      console.log("B:\t" + targetDonorsByPatient.NDD.probB.toFixed(4) + "\t" + btDistributions.donor.NDD.probB.toFixed(4) + "\t" + currentConfig.donorBtDistributionByPatientNDD.probB.toFixed(4) + "\t" + btErrors.donor.NDD[2].toFixed(4));
-      console.log("AB:\t" + targetDonorsByPatient.NDD.probAB.toFixed(4) + "\t" + btDistributions.donor.NDD.probAB.toFixed(4) + "\t" + currentConfig.donorBtDistributionByPatientNDD.probAB.toFixed(4) + "\t" + btErrors.donor.NDD[3].toFixed(4));
-
+      if (tuneNdds) {
+        console.log("NDDonors target\tactual\tprobs\terr");
+        console.log("O:\t" + targetDonorsByPatient.NDD.probO.toFixed(4) + "\t" + btDistributions.donor.NDD.probO.toFixed(4) + "\t" + currentConfig.donorBtDistributionByPatientNDD.probO.toFixed(4) + "\t" + btErrors.donor.NDD[0].toFixed(4));
+        console.log("A:\t" + targetDonorsByPatient.NDD.probA.toFixed(4) + "\t" + btDistributions.donor.NDD.probA.toFixed(4) + "\t" + currentConfig.donorBtDistributionByPatientNDD.probA.toFixed(4) + "\t" + btErrors.donor.NDD[1].toFixed(4));
+        console.log("B:\t" + targetDonorsByPatient.NDD.probB.toFixed(4) + "\t" + btDistributions.donor.NDD.probB.toFixed(4) + "\t" + currentConfig.donorBtDistributionByPatientNDD.probB.toFixed(4) + "\t" + btErrors.donor.NDD[2].toFixed(4));
+        console.log("AB:\t" + targetDonorsByPatient.NDD.probAB.toFixed(4) + "\t" + btDistributions.donor.NDD.probAB.toFixed(4) + "\t" + currentConfig.donorBtDistributionByPatientNDD.probAB.toFixed(4) + "\t" + btErrors.donor.NDD[3].toFixed(4));
+      }
     } else {
       targetConfig.donorBtDistribution = currentConfig.donorBtDistribution;
       targetConfig.patientBtDistribution = currentConfig.patientBtDistribution;
